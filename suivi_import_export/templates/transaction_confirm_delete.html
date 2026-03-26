@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Supprimer Transaction - Import/Export SN{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Supprimer Transaction</h1>
+    <p>Cette action est irréversible</p>
+</div>
+
+<div class="table-card">
+    <h3>Confirmer la suppression</h3>
+    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+        Voulez-vous vraiment supprimer la transaction <strong style="color: var(--accent-2);">{{ transaction.numero_declaration }}</strong> ?
+    </p>
+
+    <table>
+        <tr><th>Type</th><td>{{ transaction.get_type_transaction_display }}</td></tr>
+        <tr><th>Produit</th><td>{{ transaction.produit.nom }}</td></tr>
+        <tr><th>Origine</th><td>{{ transaction.pays_origine.nom }}</td></tr>
+        <tr><th>Destination</th><td>{{ transaction.pays_destination.nom }}</td></tr>
+        <tr><th>Valeur</th><td>{{ transaction.valeur_totale|floatformat:0|intcomma }} FCFA</td></tr>
+        <tr><th>Date</th><td>{{ transaction.date_transaction|date:"d/m/Y" }}</td></tr>
+    </table>
+
+    <form method="post" style="margin-top: 2rem; display: flex; gap: 1rem;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary" style="background: var(--gradient-2);">Confirmer la suppression</button>
+        <a href="{% url 'transactions' %}" class="btn btn-primary" style="background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.1);">Annuler</a>
+    </form>
+</div>
+{% endblock %}

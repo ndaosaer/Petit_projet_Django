@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block head_scripts %}<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>{% endblock %}
+{% block title %}Analyse par Pays - Import/Export SN{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Analyse par Pays</h1>
+    <p>Détail des échanges commerciaux avec un pays partenaire</p>
+</div>
+
+<form method="get" class="filter-bar">
+    <div class="filter-group">
+        <label>Sélectionner un pays</label>
+        <select name="pays">
+            <option value="">-- Choisir un pays --</option>
+            {% for pays in pays_list %}
+            <option value="{{ pays.id }}" {% if pays_id == pays.id|stringformat:"d" %}selected{% endif %}>{{ pays.nom }} ({{ pays.code_iso }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Analyser</button>
+</form>
+
+{% if pays_selectionne %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Pays</div>
+        <div class="value neutral">{{ pays_selectionne.nom }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Continent</div>
+        <div class="value neutral">{{ pays_selectionne.get_continent_display }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Bloc Économique</div>
+        <div class="value warning">{{ pays_selectionne.get_bloc_economique_display }}</div>
+    </div>
+</div>
+
+{% if evolution_data %}
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Évolution des échanges avec {{ pays_selectionne.nom }}</h3>
+        <canvas id="evolutionPaysChart"></canvas>
+    </div>
+</div>
+{% endif %}
+
+<div class="charts-grid">
+    <div class="table-card">
+        <h3>Top Produits Importés depuis {{ pays_selectionne.nom }}</h3>
+        {% if top_produits_imp %}
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Produit</th>
+                    <th>Quantité Totale</th>
+                    <th>Valeur Totale</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in top_produits_imp %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ p.produit__nom }}</td>
+                    <td>{{ p.qte|floatformat:0 }}</td>
+                    <td>{{ p.total|floatformat:0|intcomma }} FCFA</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><p>Aucune importation depuis ce pays.</p></div>
+        {% endif %}
+    </div>
+
+    <div class="table-card">
+        <h3>Top Produits Exportés vers {{ pays_selectionne.nom }}</h3>
+        {% if top_produits_exp %}
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Produit</th>
+                    <th>Quantité Totale</th>
+                    <th>Valeur Totale</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in top_produits_exp %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ p.produit__nom }}</td>
+                    <td>{{ p.qte|floatformat:0 }}</td>
+                    <td>{{ p.total|floatformat:0|intcomma }} FCFA</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><p>Aucune exportation vers ce pays.</p></div>
+        {% endif %}
+    </div>
+</div>
+
+{% else %}
+<div class="table-card">
+    <div class="empty-state">
+        <p>Sélectionnez un pays pour voir l'analyse détaillée de ses échanges commerciaux.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if pays_selectionne and evolution_data %}
+<script>
+    new Chart(document.getElementById('evolutionPaysChart'), {
+        type: 'line',
+        data: {
+            labels: {{ evolution_data.labels|safe }},
+            datasets: [
+                {
+                    label: 'Importations',
+                    data: {{ evolution_data.imports|safe }},
+                    borderColor: '#ff6b6b',
+                    backgroundColor: 'rgba(255,107,107,0.1)',
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Exportations',
+                    data: {{ evolution_data.exports|safe }},
+                    borderColor: '#00d4aa',
+                    backgroundColor: 'rgba(0,212,170,0.1)',
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#e0e0e0' } } },
+            scales: {
+                x: { ticks: { color: '#a0a0b0' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#a0a0b0' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

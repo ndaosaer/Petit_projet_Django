@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Suivi Import/Export{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    {% block head_scripts %}{% endblock %}
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent-1: #00d4aa;
+            --accent-2: #ff6b6b;
+            --accent-3: #4ecdc4;
+            --accent-4: #ffd93d;
+            --gradient-1: linear-gradient(135deg, #00d4aa, #00a085);
+            --gradient-2: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            --gradient-3: linear-gradient(135deg, #4ecdc4, #2d9cdb);
+            --gradient-4: linear-gradient(135deg, #ffd93d, #f39c12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 0 2rem;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            height: 60px;
+        }
+
+        .nav-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: var(--accent-1);
+            text-decoration: none;
+            margin-right: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.3rem;
+            flex: 1;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .nav-links::-webkit-scrollbar { display: none; }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.4rem 0.7rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--accent-1);
+            background: rgba(0, 212, 170, 0.1);
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-user span {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .nav-user a {
+            color: var(--accent-2);
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .nav-user .role-badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .role-badge.admin {
+            background: rgba(255, 217, 61, 0.2);
+            color: var(--accent-4);
+        }
+
+        .role-badge.client {
+            background: rgba(78, 205, 196, 0.2);
+            color: var(--accent-3);
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            padding: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .hamburger span {
+            width: 22px;
+            height: 2px;
+            background: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(4px, 4px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(4px, -4px);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 1rem;
+            z-index: 999;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .mobile-menu.open {
+            display: flex;
+        }
+
+        .mobile-menu a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .mobile-menu a:hover, .mobile-menu a.active {
+            color: var(--accent-1);
+            background: rgba(0, 212, 170, 0.1);
+        }
+
+        .main-content {
+            padding: 80px 2rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stat-card .label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .stat-card .value.positive { color: var(--accent-1); }
+        .stat-card .value.negative { color: var(--accent-2); }
+        .stat-card .value.neutral { color: var(--accent-3); }
+        .stat-card .value.warning { color: var(--accent-4); }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .chart-card h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        th {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        td { font-size: 0.9rem; }
+
+        .table-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            overflow-x: auto;
+            margin-bottom: 2rem;
+        }
+
+        .table-card h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .badge-import { background: rgba(255,107,107,0.2); color: var(--accent-2); }
+        .badge-export { background: rgba(0,212,170,0.2); color: var(--accent-1); }
+        .badge-positive { background: rgba(0,212,170,0.2); color: var(--accent-1); }
+        .badge-negative { background: rgba(255,107,107,0.2); color: var(--accent-2); }
+
+        .filter-bar {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .filter-group label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        select, input[type="date"], input[type="text"], input[type="password"], input[type="email"], input[type="number"] {
+            background: var(--bg-primary);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent-1);
+        }
+
+        .btn {
+            padding: 0.6rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: #fff;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin-top: 3rem;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate { animation: fadeInUp 0.5s ease-out; }
+
+        @media (max-width: 768px) {
+            nav { padding: 0 1rem; }
+            .nav-links { display: none; }
+            .hamburger { display: flex; }
+            .main-content { padding: 80px 1rem 1rem; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .filter-bar { flex-direction: column; }
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="hamburger" onclick="toggleMobileMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <a href="{% url 'dashboard' %}" class="nav-brand">Import/Export SN</a>
+        <div class="nav-links">
+            <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+            <a href="{% url 'transactions' %}" {% if request.resolver_match.url_name == 'transactions' %}class="active"{% endif %}>Transactions</a>
+            <a href="{% url 'balance' %}" {% if request.resolver_match.url_name == 'balance' %}class="active"{% endif %}>Balance</a>
+            <a href="{% url 'top_produits' %}" {% if request.resolver_match.url_name == 'top_produits' %}class="active"{% endif %}>Top Produits</a>
+            {% if user_role == 'admin' %}
+            <a href="{% url 'analyse_pays' %}" {% if request.resolver_match.url_name == 'analyse_pays' %}class="active"{% endif %}>Analyse Pays</a>
+            <a href="{% url 'sankey' %}" {% if request.resolver_match.url_name == 'sankey' %}class="active"{% endif %}>Flux Sankey</a>
+            <a href="{% url 'codes_sh' %}" {% if request.resolver_match.url_name == 'codes_sh' %}class="active"{% endif %}>Codes SH</a>
+            <a href="{% url 'blocs' %}" {% if request.resolver_match.url_name == 'blocs' %}class="active"{% endif %}>Blocs</a>
+            <a href="{% url 'series_temporelles' %}" {% if request.resolver_match.url_name == 'series_temporelles' %}class="active"{% endif %}>Tendances</a>
+            <a href="{% url 'anomalies' %}" {% if request.resolver_match.url_name == 'anomalies' %}class="active"{% endif %}>Anomalies</a>
+            {% endif %}
+        </div>
+        {% if user.is_authenticated %}
+        <div class="nav-user">
+            <span class="role-badge {% if user_role == 'admin' %}admin{% else %}client{% endif %}">
+                {% if user_role == 'admin' %}Admin{% else %}Client{% endif %}
+            </span>
+            <span>{{ user.username }}</span>
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" style="background:none;border:none;color:var(--accent-2);cursor:pointer;font-size:inherit;font-family:inherit;">Déconnexion</button>
+            </form>
+        </div>
+        {% endif %}
+    </nav>
+
+    <!-- Menu mobile -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
+        <a href="{% url 'transactions' %}" {% if request.resolver_match.url_name == 'transactions' %}class="active"{% endif %}>Transactions</a>
+        <a href="{% url 'balance' %}" {% if request.resolver_match.url_name == 'balance' %}class="active"{% endif %}>Balance</a>
+        <a href="{% url 'top_produits' %}" {% if request.resolver_match.url_name == 'top_produits' %}class="active"{% endif %}>Top Produits</a>
+        {% if user_role == 'admin' %}
+        <a href="{% url 'analyse_pays' %}" {% if request.resolver_match.url_name == 'analyse_pays' %}class="active"{% endif %}>Analyse Pays</a>
+        <a href="{% url 'sankey' %}" {% if request.resolver_match.url_name == 'sankey' %}class="active"{% endif %}>Flux Sankey</a>
+        <a href="{% url 'codes_sh' %}" {% if request.resolver_match.url_name == 'codes_sh' %}class="active"{% endif %}>Codes SH</a>
+        <a href="{% url 'blocs' %}" {% if request.resolver_match.url_name == 'blocs' %}class="active"{% endif %}>Blocs</a>
+        <a href="{% url 'series_temporelles' %}" {% if request.resolver_match.url_name == 'series_temporelles' %}class="active"{% endif %}>Tendances</a>
+        <a href="{% url 'anomalies' %}" {% if request.resolver_match.url_name == 'anomalies' %}class="active"{% endif %}>Anomalies</a>
+        {% endif %}
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" style="background:none;border:none;color:var(--accent-2);cursor:pointer;font-size:inherit;font-family:inherit;padding:0.75rem 1rem;width:100%;text-align:left;">Déconnexion</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <div class="main-content animate">
+        {% if messages %}
+        <div style="margin-bottom: 1rem;">
+            {% for message in messages %}
+            <div style="padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 0.5rem;
+                        background: {% if message.tags == 'error' %}rgba(255,107,107,0.2){% else %}rgba(0,212,170,0.2){% endif %};">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer>
+        Système de Suivi Import/Export - Groupe 5 - ENSAE / Cours Django AS3
+    </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+            document.querySelector('.hamburger').classList.toggle('active');
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

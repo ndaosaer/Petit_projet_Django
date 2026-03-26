@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Transactions - Import/Export SN{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Transactions</h1>
+    <p>Liste des opérations d'import et d'export</p>
+</div>
+
+<form method="get" class="filter-bar">
+    <div class="filter-group">
+        <label>Type</label>
+        <select name="type">
+            <option value="">Tous</option>
+            <option value="importation" {% if type_filtre == 'importation' %}selected{% endif %}>Importation</option>
+            <option value="exportation" {% if type_filtre == 'exportation' %}selected{% endif %}>Exportation</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Pays</label>
+        <select name="pays">
+            <option value="">Tous</option>
+            {% for pays in pays_list %}
+            <option value="{{ pays.id }}" {% if pays_filtre == pays.id|stringformat:"d" %}selected{% endif %}>{{ pays.nom }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Date début</label>
+        <input type="date" name="date_debut" value="{{ date_debut }}">
+    </div>
+    <div class="filter-group">
+        <label>Date fin</label>
+        <input type="date" name="date_fin" value="{{ date_fin }}">
+    </div>
+    <button type="submit" class="btn btn-primary">Filtrer</button>
+    {% if user_role == 'admin' %}
+    <a href="{% url 'transaction_create' %}" class="btn btn-primary" style="background: var(--gradient-3);">+ Nouvelle Transaction</a>
+    {% endif %}
+</form>
+
+<div class="table-card">
+    <h3>Résultats ({{ page_obj.paginator.count }} transactions)</h3>
+    {% if transactions %}
+    <table>
+        <thead>
+            <tr>
+                <th>N° Déclaration</th>
+                <th>Type</th>
+                <th>Produit</th>
+                <th>Origine</th>
+                <th>Destination</th>
+                <th>Quantité</th>
+                <th>Valeur Totale</th>
+                <th>Date</th>
+                <th>Transport</th>
+                {% if user_role == 'admin' %}<th>Actions</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in transactions %}
+            <tr>
+                <td>{{ t.numero_declaration }}</td>
+                <td>
+                    <span class="badge {% if t.type_transaction == 'importation' %}badge-import{% else %}badge-export{% endif %}">
+                        {{ t.get_type_transaction_display }}
+                    </span>
+                </td>
+                <td>{{ t.produit.nom }}</td>
+                <td>{{ t.pays_origine.nom }}</td>
+                <td>{{ t.pays_destination.nom }}</td>
+                <td>{{ t.quantite|floatformat:0 }}</td>
+                <td>{{ t.valeur_totale|floatformat:0|intcomma }} FCFA</td>
+                <td>{{ t.date_transaction|date:"d/m/Y" }}</td>
+                <td>{{ t.get_mode_transport_display }}</td>
+                {% if user_role == 'admin' %}
+                <td style="white-space: nowrap;">
+                    <a href="{% url 'transaction_edit' t.pk %}" style="color: var(--accent-3); text-decoration: none; margin-right: 0.5rem;">Modifier</a>
+                    <a href="{% url 'transaction_delete' t.pk %}" style="color: var(--accent-2); text-decoration: none;">Supprimer</a>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>Aucune transaction trouvée avec ces filtres.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+    {% if page_obj.has_previous %}
+    <a href="?page=1{% if type_filtre %}&type={{ type_filtre }}{% endif %}{% if pays_filtre %}&pays={{ pays_filtre }}{% endif %}{% if date_debut %}&date_debut={{ date_debut }}{% endif %}{% if date_fin %}&date_fin={{ date_fin }}{% endif %}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">&laquo; 1</a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if type_filtre %}&type={{ type_filtre }}{% endif %}{% if pays_filtre %}&pays={{ pays_filtre }}{% endif %}{% if date_debut %}&date_debut={{ date_debut }}{% endif %}{% if date_fin %}&date_fin={{ date_fin }}{% endif %}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">&lsaquo; Prec.</a>
+    {% endif %}
+    <span style="padding: 0.4rem 1rem; background: var(--bg-card); border-radius: 8px; color: var(--accent-1);">
+        Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+    </span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if type_filtre %}&type={{ type_filtre }}{% endif %}{% if pays_filtre %}&pays={{ pays_filtre }}{% endif %}{% if date_debut %}&date_debut={{ date_debut }}{% endif %}{% if date_fin %}&date_fin={{ date_fin }}{% endif %}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Suiv. &rsaquo;</a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% if type_filtre %}&type={{ type_filtre }}{% endif %}{% if pays_filtre %}&pays={{ pays_filtre }}{% endif %}{% if date_debut %}&date_debut={{ date_debut }}{% endif %}{% if date_fin %}&date_fin={{ date_fin }}{% endif %}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">{{ page_obj.paginator.num_pages }} &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if user_role == 'admin' %}
+<div style="margin-top: 1rem;">
+    <a href="{% url 'export_csv' %}?type=transactions" class="btn btn-primary">Exporter en CSV</a>
+</div>
+{% endif %}
+{% endblock %}

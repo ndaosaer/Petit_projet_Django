@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Détection d'Anomalies - Import/Export SN{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Détection d'Anomalies</h1>
+    <p>Transactions présentant des variations inhabituelles de prix ou de volume</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Anomalies Détectées</div>
+        <div class="value negative">{{ nb_anomalies }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Total Transactions Analysées</div>
+        <div class="value neutral">{{ nb_total }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Taux d'Anomalies</div>
+        <div class="value warning">
+            {% if nb_total > 0 %}
+                {% widthratio nb_anomalies nb_total 100 %}%
+            {% else %}
+                0%
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="table-card">
+    <h3>Transactions Suspectes</h3>
+    {% if anomalies %}
+    <table>
+        <thead>
+            <tr>
+                <th>N° Déclaration</th>
+                <th>Type</th>
+                <th>Produit</th>
+                <th>Origine</th>
+                <th>Destination</th>
+                <th>Prix Unitaire</th>
+                <th>Prix Moyen</th>
+                <th>Écart</th>
+                <th>Date</th>
+                <th>Raison</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in anomalies %}
+            <tr>
+                <td>{{ a.transaction.numero_declaration }}</td>
+                <td>
+                    <span class="badge {% if a.transaction.type_transaction == 'importation' %}badge-import{% else %}badge-export{% endif %}">
+                        {{ a.transaction.get_type_transaction_display }}
+                    </span>
+                </td>
+                <td>{{ a.transaction.produit.nom }}</td>
+                <td>{{ a.transaction.pays_origine.nom }}</td>
+                <td>{{ a.transaction.pays_destination.nom }}</td>
+                <td>{{ a.transaction.prix_unitaire|floatformat:0|intcomma }} FCFA</td>
+                <td>{{ a.prix_moyen|floatformat:0|intcomma }} FCFA</td>
+                <td>
+                    <span class="badge badge-negative">{{ a.ecart_prix|floatformat:0|intcomma }} FCFA</span>
+                </td>
+                <td>{{ a.transaction.date_transaction|date:"d/m/Y" }}</td>
+                <td><strong style="color: var(--accent-4);">{{ a.raisons }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>Aucune anomalie détectée. Toutes les transactions sont dans les normes.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="table-card">
+    <h3>Méthodologie</h3>
+    <p style="color: var(--text-secondary); line-height: 1.8;">
+        Les anomalies sont détectées en comparant chaque transaction aux statistiques de son produit.
+        Une transaction est considérée comme suspecte si son prix unitaire ou son volume s'écarte de plus
+        de <strong style="color: var(--accent-4);">2 écarts-types</strong> de la moyenne du produit.
+        Seuls les produits ayant au moins 3 transactions sont analysés.
+    </p>
+</div>
+{% endblock %}

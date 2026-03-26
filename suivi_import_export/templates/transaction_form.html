@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }} - Import/Export SN{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ titre }}</h1>
+    <p>{% if transaction %}Modification de {{ transaction.numero_declaration }}{% else %}Enregistrer une nouvelle transaction commerciale{% endif %}</p>
+</div>
+
+<div class="table-card">
+    <form method="post">
+        {% csrf_token %}
+        {% if form.errors %}
+        <div style="padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; background: rgba(255,107,107,0.2);">
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+            {% for field in form %}
+            <div class="filter-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">
+                {% if transaction %}Modifier{% else %}Créer{% endif %}
+            </button>
+            <a href="{% url 'transactions' %}" class="btn btn-primary" style="background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.1);">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

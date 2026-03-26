@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block head_scripts %}<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>{% endblock %}
+{% block title %}Codes SH - Import/Export SN{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Analyse par Codes SH</h1>
+    <p>Analyse des flux commerciaux selon le Système Harmonisé de désignation des marchandises</p>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card" style="grid-column: 1 / -1;">
+        <h3>Importations vs Exportations par Code SH</h3>
+        <canvas id="shChart"></canvas>
+    </div>
+</div>
+
+<div class="table-card">
+    <h3>Tableau par Catégorie SH</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Code SH</th>
+                <th>Catégorie</th>
+                <th>Importations</th>
+                <th>Exportations</th>
+                <th>Balance</th>
+                <th>Nb Transactions</th>
+                <th>Détail</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in categories %}
+            <tr>
+                <td><strong>{{ cat.produit__categorie__code_sh }}</strong></td>
+                <td>{{ cat.produit__categorie__nom }}</td>
+                <td>{{ cat.total_imports|floatformat:0|intcomma }} FCFA</td>
+                <td>{{ cat.total_exports|floatformat:0|intcomma }} FCFA</td>
+                <td>
+                    <span class="badge {% if cat.balance >= 0 %}badge-positive{% else %}badge-negative{% endif %}">
+                        {{ cat.balance|floatformat:0|intcomma }} FCFA
+                    </span>
+                </td>
+                <td>{{ cat.nb_transactions }}</td>
+                <td>
+                    <a href="?code={{ cat.produit__categorie__code_sh }}" class="btn btn-primary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">Voir</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if categorie_sel %}
+<div class="table-card">
+    <h3>Détail - {{ categorie_sel.code_sh }} : {{ categorie_sel.nom }}</h3>
+    <p style="color: var(--text-secondary); margin-bottom: 1rem;">{{ categorie_sel.description }}</p>
+    {% if detail_produits %}
+    <table>
+        <thead>
+            <tr>
+                <th>Produit</th>
+                <th>Importations</th>
+                <th>Exportations</th>
+                <th>Nb Transactions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in detail_produits %}
+            <tr>
+                <td>{{ p.produit__nom }}</td>
+                <td>{{ p.total_imports|floatformat:0|intcomma }} FCFA</td>
+                <td>{{ p.total_exports|floatformat:0|intcomma }} FCFA</td>
+                <td>{{ p.nb }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><p>Aucune donnée pour cette catégorie.</p></div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if user_role == 'admin' %}
+<div style="margin-top: 1rem;">
+    <a href="{% url 'export_csv' %}?type=produits" class="btn btn-primary">Exporter en CSV</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    new Chart(document.getElementById('shChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ graph_labels|safe }},
+            datasets: [
+                {
+                    label: 'Importations',
+                    data: {{ graph_imports|safe }},
+                    backgroundColor: 'rgba(255,107,107,0.7)',
+                },
+                {
+                    label: 'Exportations',
+                    data: {{ graph_exports|safe }},
+                    backgroundColor: 'rgba(0,212,170,0.7)',
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#e0e0e0' } } },
+            scales: {
+                x: { ticks: { color: '#a0a0b0', maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#a0a0b0' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+</script>
+{% endblock %}

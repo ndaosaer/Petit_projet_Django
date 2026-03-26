@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block head_scripts %}<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>{% endblock %}
+{% block title %}Balance Commerciale - Import/Export SN{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Balance Commerciale</h1>
+    <p>Analyse de la balance commerciale par pays et par bloc économique</p>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Imports vs Exports par Pays (Top 10)</h3>
+        <canvas id="balanceChart"></canvas>
+    </div>
+</div>
+
+<div class="table-card">
+    <h3>Balance par Bloc Économique</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Bloc</th>
+                <th>Importations</th>
+                <th>Exportations</th>
+                <th>Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in balance_par_bloc %}
+            <tr>
+                <td><strong>{{ b.bloc }}</strong></td>
+                <td>{{ b.imports|floatformat:0|intcomma }} FCFA</td>
+                <td>{{ b.exports|floatformat:0|intcomma }} FCFA</td>
+                <td>
+                    <span class="badge {% if b.balance >= 0 %}badge-positive{% else %}badge-negative{% endif %}">
+                        {{ b.balance|floatformat:0|intcomma }} FCFA
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-card">
+    <h3>Balance Détaillée par Pays</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Pays</th>
+                <th>Importations</th>
+                <th>Exportations</th>
+                <th>Balance</th>
+                <th>Taux de Couverture</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in balance_par_pays %}
+            <tr>
+                <td>{{ b.pays }}</td>
+                <td>{{ b.imports|floatformat:0|intcomma }} FCFA</td>
+                <td>{{ b.exports|floatformat:0|intcomma }} FCFA</td>
+                <td>
+                    <span class="badge {% if b.balance >= 0 %}badge-positive{% else %}badge-negative{% endif %}">
+                        {{ b.balance|floatformat:0|intcomma }} FCFA
+                    </span>
+                </td>
+                <td>{{ b.taux_couverture }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    new Chart(document.getElementById('balanceChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ graph_pays|safe }},
+            datasets: [
+                {
+                    label: 'Importations',
+                    data: {{ graph_imports|safe }},
+                    backgroundColor: 'rgba(255,107,107,0.7)',
+                },
+                {
+                    label: 'Exportations',
+                    data: {{ graph_exports|safe }},
+                    backgroundColor: 'rgba(0,212,170,0.7)',
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#e0e0e0' } } },
+            scales: {
+                x: { ticks: { color: '#a0a0b0' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#a0a0b0' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+</script>
+{% endblock %}

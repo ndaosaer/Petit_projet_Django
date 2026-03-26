@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block head_scripts %}<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>{% endblock %}
+{% block title %}Top Produits - Import/Export SN{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Top Produits</h1>
+    <p>Classement des produits les plus échangés et répartition par catégorie</p>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Répartition Importations par Catégorie</h3>
+        <canvas id="catImportsChart"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Répartition Exportations par Catégorie</h3>
+        <canvas id="catExportsChart"></canvas>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="table-card">
+        <h3>Top 10 Produits Importés</h3>
+        {% if top_importes %}
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Produit</th>
+                    <th>Catégorie</th>
+                    <th>Quantité Totale</th>
+                    <th>Valeur Totale</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in top_importes %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ p.produit__nom }}</td>
+                    <td>{{ p.produit__categorie__nom }}</td>
+                    <td>{{ p.total_qte|floatformat:0 }}</td>
+                    <td>{{ p.total_valeur|floatformat:0|intcomma }} FCFA</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><p>Aucune donnée d'importation.</p></div>
+        {% endif %}
+    </div>
+
+    <div class="table-card">
+        <h3>Top 10 Produits Exportés</h3>
+        {% if top_exportes %}
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Produit</th>
+                    <th>Catégorie</th>
+                    <th>Quantité Totale</th>
+                    <th>Valeur Totale</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in top_exportes %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ p.produit__nom }}</td>
+                    <td>{{ p.produit__categorie__nom }}</td>
+                    <td>{{ p.total_qte|floatformat:0 }}</td>
+                    <td>{{ p.total_valeur|floatformat:0|intcomma }} FCFA</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><p>Aucune donnée d'exportation.</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var pieColors = ['#00d4aa', '#ff6b6b', '#4ecdc4', '#ffd93d', '#a855f7', '#3b82f6', '#f97316', '#ec4899', '#14b8a6', '#8b5cf6'];
+
+    new Chart(document.getElementById('catImportsChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ cat_imports_labels|safe }},
+            datasets: [{
+                data: {{ cat_imports_data|safe }},
+                backgroundColor: pieColors
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#e0e0e0', padding: 15, font: { size: 11 } }
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('catExportsChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ cat_exports_labels|safe }},
+            datasets: [{
+                data: {{ cat_exports_data|safe }},
+                backgroundColor: pieColors
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#e0e0e0', padding: 15, font: { size: 11 } }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

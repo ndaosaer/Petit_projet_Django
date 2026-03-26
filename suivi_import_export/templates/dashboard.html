@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block head_scripts %}<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>{% endblock %}
+{% block title %}Dashboard - Import/Export SN{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <p>Vue d'ensemble des flux commerciaux du Sénégal</p>
+</div>
+
+<form method="get" class="filter-bar">
+    <div class="filter-group">
+        <label>Année</label>
+        <select name="annee">
+            <option value="">Toutes</option>
+            {% for a in annees_disponibles %}
+            <option value="{{ a }}" {% if annee == a|stringformat:"d" %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Date début</label>
+        <input type="date" name="date_debut" value="{{ date_debut }}">
+    </div>
+    <div class="filter-group">
+        <label>Date fin</label>
+        <input type="date" name="date_fin" value="{{ date_fin }}">
+    </div>
+    <button type="submit" class="btn btn-primary">Filtrer</button>
+    {% if annee or date_debut or date_fin %}
+    <a href="{% url 'dashboard' %}" class="btn btn-primary" style="background: var(--gradient-2);">Réinitialiser</a>
+    {% endif %}
+</form>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Total Importations</div>
+        <div class="value negative">{{ total_imports|floatformat:0|intcomma }} FCFA</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Total Exportations</div>
+        <div class="value positive">{{ total_exports|floatformat:0|intcomma }} FCFA</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Balance Commerciale</div>
+        <div class="value {% if balance >= 0 %}positive{% else %}negative{% endif %}">{{ balance|floatformat:0|intcomma }} FCFA</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Transactions</div>
+        <div class="value neutral">{{ nb_transactions }}</div>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card" style="grid-column: 1 / -1;">
+        <h3>Évolution Mensuelle des Flux</h3>
+        <canvas id="evolutionChart"></canvas>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Top 10 Partenaires - Importations</h3>
+        <canvas id="partenaireImportChart"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Top 10 Partenaires - Exportations</h3>
+        <canvas id="partenaireExportChart"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Evolution mensuelle
+    new Chart(document.getElementById('evolutionChart'), {
+        type: 'line',
+        data: {
+            labels: {{ mois_labels|safe }},
+            datasets: [
+                {
+                    label: 'Importations',
+                    data: {{ imports_data|safe }},
+                    borderColor: '#ff6b6b',
+                    backgroundColor: 'rgba(255,107,107,0.1)',
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Exportations',
+                    data: {{ exports_data|safe }},
+                    borderColor: '#00d4aa',
+                    backgroundColor: 'rgba(0,212,170,0.1)',
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#e0e0e0' } } },
+            scales: {
+                x: { ticks: { color: '#a0a0b0' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#a0a0b0' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+
+    // Top partenaires import
+    var topImp = {{ top_partenaires_import|safe }};
+    new Chart(document.getElementById('partenaireImportChart'), {
+        type: 'bar',
+        data: {
+            labels: topImp.map(p => p.pays_origine__nom),
+            datasets: [{
+                label: 'Valeur importations',
+                data: topImp.map(p => p.total),
+                backgroundColor: ['#ff6b6b', '#ff8e8e', '#ffb0b0', '#ffd0d0', '#ffe8e8', '#ff5252', '#ff7979', '#ff9e9e', '#ffc2c2', '#ffe0e0']
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#a0a0b0' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#a0a0b0' }, grid: { display: false } }
+            }
+        }
+    });
+
+    // Top partenaires export
+    var topExp = {{ top_partenaires_export|safe }};
+    new Chart(document.getElementById('partenaireExportChart'), {
+        type: 'bar',
+        data: {
+            labels: topExp.map(p => p.pays_destination__nom),
+            datasets: [{
+                label: 'Valeur exportations',
+                data: topExp.map(p => p.total),
+                backgroundColor: ['#00d4aa', '#33ddbb', '#66e6cc', '#99efdd', '#ccf7ee', '#00b894', '#2dceaa', '#55d6bb', '#7fdfcc', '#aae8dd']
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#a0a0b0' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#a0a0b0' }, grid: { display: false } }
+            }
+        }
+    });
+</script>
+{% endblock %}

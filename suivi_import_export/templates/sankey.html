@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Flux Sankey - Import/Export SN{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Graphe Sankey des Flux Commerciaux</h1>
+    <p>Visualisation des flux de marchandises entre pays d'origine et de destination</p>
+</div>
+
+<form method="get" class="filter-bar">
+    <div class="filter-group">
+        <label>Type de flux</label>
+        <select name="type">
+            <option value="">Tous les flux</option>
+            <option value="importation" {% if type_filtre == 'importation' %}selected{% endif %}>Importations uniquement</option>
+            <option value="exportation" {% if type_filtre == 'exportation' %}selected{% endif %}>Exportations uniquement</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Filtrer</button>
+</form>
+
+<div class="chart-card">
+    <div id="sankeyChart" style="width:100%; height:600px;"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    var nodes = {{ nodes|safe }};
+    var sources = {{ sources|safe }};
+    var targets = {{ targets|safe }};
+    var values = {{ values|safe }};
+
+    if (nodes.length > 0) {
+        var colors = [];
+        for (var i = 0; i < nodes.length; i++) {
+            colors.push('rgba(0, 212, 170, 0.7)');
+        }
+
+        var linkColors = [];
+        for (var i = 0; i < sources.length; i++) {
+            linkColors.push('rgba(78, 205, 196, 0.3)');
+        }
+
+        var data = {
+            type: "sankey",
+            orientation: "h",
+            node: {
+                pad: 15,
+                thickness: 20,
+                line: { color: "rgba(255,255,255,0.3)", width: 0.5 },
+                label: nodes,
+                color: colors
+            },
+            link: {
+                source: sources,
+                target: targets,
+                value: values,
+                color: linkColors
+            }
+        };
+
+        var layout = {
+            font: { size: 12, color: '#e0e0e0' },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            margin: { t: 20, b: 20 }
+        };
+
+        Plotly.newPlot('sankeyChart', [data], layout, {responsive: true});
+    } else {
+        document.getElementById('sankeyChart').innerHTML = '<div class="empty-state"><p>Aucun flux commercial disponible.</p></div>';
+    }
+</script>
+{% endblock %}
