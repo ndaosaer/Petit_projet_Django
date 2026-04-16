@@ -303,6 +303,9 @@ Les grandes etapes sont les suivantes :
 ---
 ## Lien de la plateforme
 https://marcdebasssongo.pythonanywhere.com/
+Connexion compte admin:
+  admin
+  admin123
 
 ## Auteurs
 
