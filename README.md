@@ -301,6 +301,8 @@ Les grandes etapes sont les suivantes :
 - Integrer un taux de change dynamique via une API financiere.
 
 ---
+## Lien de la plateforme
+https://marcdebasssongo.pythonanywhere.com/
 
 ## Auteurs
 
